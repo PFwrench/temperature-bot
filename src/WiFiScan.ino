@@ -36,11 +36,11 @@ DHT dht(DHTPIN, DHTTYPE);
 const char* ssid = "Muxy";
 const char* password = "ifyoubuildit";
 
-const char* aio_username = "pfrench";
+const char* aio_username = "...";
 const char* aio_server = "io.adafruit.com";
-const char* aio_key = "2f0543a56c014e2cadba095afd25c74f";
-const char* CLIMATE_FEED = "pfrench/feeds/climate-data-4";
-const char* topic = "climate_data";
+const char* aio_key = "...";
+const char* CLIMATE_FEED = "path/to/feed";
+const char* topic = "...";
 
 
 const char* MQTT_SERVER  = aio_server;
