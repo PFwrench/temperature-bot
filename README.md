@@ -1,5 +1,5 @@
 # Temperature-bot
-This firmware allows an ESP8266 to publish to a MQTT server using [PlatformIO] (platformio.org). The goal of this project was to have ESP8266's set up around the building and get a more accurate idea of the temperature in the building than just what the thermostat read.
+This firmware allows an ESP8266 to publish to a MQTT server using [PlatformIO] (platformio.org). The goal of this project was to have ESP8266's set up around the building and get a more accurate reading of the temperature in the building than just what the thermostat reads in one room. Works in conjunction with the [thermostat-control repo] (https://github.com/PFwrench/thermostat-control) to monitor the temperature of a room.
 
 
 ###Setup
@@ -9,6 +9,6 @@ This firmware allows an ESP8266 to publish to a MQTT server using [PlatformIO] (
 4. Install proper libraries as listed below.
 
 ### Libraries
-- [Adafruit MQTT] (https://github.com/adafruit/Adafruit_MQTT_Library), Platformio ID#1092
-- [Adafruit DHT] (https://github.com/adafruit/DHT-sensor-library), Platformio ID#19
-- [Adafruit Unified Sensor] (https://github.com/adafruit/Adafruit_Sensor), Platformio ID#31
+- [Adafruit MQTT] (https://github.com/adafruit/Adafruit_MQTT_Library), PlatformIO ID#1092
+- [Adafruit DHT] (https://github.com/adafruit/DHT-sensor-library), PlatformIO ID#19
+- [Adafruit Unified Sensor] (https://github.com/adafruit/Adafruit_Sensor), PlatformIO ID#31
