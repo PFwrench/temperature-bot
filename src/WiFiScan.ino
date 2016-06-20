@@ -7,8 +7,7 @@
 #include <DHT.h>
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <Adafruit_MQTT.h>
-#include <Adafruit_MQTT_Client.h>
+#include <PubSubClient.h>
 
 #define DHTPIN D4     // what pin we're connected to
 
@@ -30,88 +29,89 @@
 // as the current DHT reading algorithm adjusts itself to work on faster procs.
 DHT dht(DHTPIN, DHTTYPE);
 
-const char* ssid = "...";
-const char* password = "...";
+const char* ssid = "Muxy";
+const char* password = "ifyoubuildit";
+const char* server = "45.55.187.16";
 
-const char* aio_username = "...";
-const char* aio_server = "io.adafruit.com";
-const char* aio_key = "...";
-const char* CLIMATE_FEED = "path/to/feed";
-const char* topic = "...";
+WiFiClient espClient;
 
-
-const char* MQTT_SERVER  = aio_server;
-const char* MQTT_USERNAME = aio_username;
-const char* MQTT_KEY = aio_key;
-
-WiFiClient client;
-
-Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, 1883, MQTT_USERNAME, MQTT_KEY);
-
-Adafruit_MQTT_Publish climate = Adafruit_MQTT_Publish(&mqtt, CLIMATE_FEED);
+PubSubClient client(espClient);
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  // handle message arrived
-  Serial.println(topic);
-  Serial.write(payload, length);
-  Serial.println("");
+
+    Serial.print("Message arrived [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (int i = 0; i < length; i++) {
+      Serial.print((char)payload[i]);
+    }
+    Serial.println();
 }
 
+void setup_wifi() {
+
+  Serial.begin(9600);
+  // We start by connecting to a WiFi network
+  delay(5000);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
 
 void setup() {
-    Serial.begin(9600);
-    delay(1000);
-
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+  setup_wifi();
+  client.setServer(server, 1883);
+  client.setCallback(callback);
 }
 
-void MQTT_connect() {
-    int8_t ret;
 
-    // Stop if already connected.
-    if (mqtt.connected()) {
-        return;
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("ESP8266Client")) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("climate", "hello world");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
     }
-
-    Serial.print("Connecting to MQTT... ");
-
-    uint8_t retries = 3;
-    while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-            Serial.println(mqtt.connectErrorString(ret));
-            Serial.println("Retrying MQTT connection in 5 seconds...");
-            mqtt.disconnect();
-            delay(5000);  // wait 5 seconds
-            retries--;
-            if (retries == 0) {
-                // basically die and wait for WDT to reset me
-                while (1);
-            }
-        }
-        Serial.println("MQTT Connected!");
+  }
 }
+
 
 void loop() {
+
     // Wait 45 seconds between measurements to minimize the heat from the D1 mini interfering skewing the DHT sensor reading
-    delay(45000);
+    delay(15000);
+
+
 
     // Ensure the connection to the MQTT server is alive (this will make the first
     // connection and automatically reconnect when disconnected).  See the MQTT_connect
     // function definition further below.
-    MQTT_connect();
+
+    if (!client.connected()) {
+        //reconnect();
+    }
+
 
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -132,6 +132,12 @@ void loop() {
     // Compute heat index in Celsius (isFahreheit = false)
     float hic = dht.computeHeatIndex(t, h, false);
 
+
+
+    char converted[5];
+    dtostrf(f, 5, 3, converted);
+
+
     Serial.print("Humidity: ");
     Serial.print(h);
     Serial.print(" percent \t");
@@ -148,7 +154,7 @@ void loop() {
 
     Serial.print(F("\nAttempting to publish"));
     Serial.print("...");
-    if (! climate.publish(f)) {
+    if (!client.publish("climate", converted)) {
         Serial.println(F("Failed"));
     } else {
         Serial.println(F("OK!"));
